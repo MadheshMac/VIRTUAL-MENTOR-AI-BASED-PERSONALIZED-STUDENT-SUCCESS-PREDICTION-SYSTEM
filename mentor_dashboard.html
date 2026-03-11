@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Professional Mentor Dashboard</title>
+
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- jQuery + DataTables -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link
+    rel="stylesheet"
+    href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css"
+  />
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      background-color: #f9fafb;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+      color: #343a40;
+    }
+    .container-fluid {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem 2rem;
+    }
+    header {
+      flex: 0 0 auto;
+      text-align: center;
+      margin-bottom: 1rem;
+      user-select: none;
+    }
+    main {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      padding-right: 0.5rem;
+    }
+    .card-summary {
+      border-radius: 0.75rem;
+      box-shadow: 0 0.15rem 0.5rem rgba(0,0,0,0.08);
+      transition: box-shadow 0.3s ease;
+      cursor: default;
+      padding: 1rem;
+      background: #fff;
+      color: #212529;
+    }
+    .card-summary:hover {
+      box-shadow: 0 0.3rem 0.7rem rgba(0,0,0,0.12);
+    }
+    .card-summary h6 {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+      color: #495057;
+    }
+    .card-summary h2 {
+      font-weight: 700;
+      font-size: 2rem;
+      color: #212529;
+      margin: 0;
+    }
+
+    /* DataTables container */
+    div.dataTables_wrapper {
+      width: 100%;
+    }
+
+    /* High Risk Panel */
+    #highRiskPanel {
+      max-height: 220px;
+      overflow-y: auto;
+      margin-bottom: 1rem;
+      border: 1px solid #dee2e6;
+      border-radius: 0.375rem;
+      background-color: white;
+    }
+    #highRiskPanel table {
+      margin-bottom: 0;
+    }
+
+    /* Buttons group */
+    .btn-group {
+      margin-bottom: 0.75rem;
+    }
+
+    /* Scrollbar */
+    #highRiskPanel::-webkit-scrollbar {
+      width: 7px;
+    }
+    #highRiskPanel::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    #highRiskPanel::-webkit-scrollbar-thumb {
+      background: #adb5bd;
+      border-radius: 4px;
+    }
+    #highRiskPanel::-webkit-scrollbar-thumb:hover {
+      background: #868e96;
+    }
+
+    /* Chart container height */
+    .chart-container {
+      height: 250px;
+      background: white;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      box-shadow: 0 0.15rem 0.4rem rgba(0,0,0,0.07);
+    }
+    .chart-container canvas {
+      max-height: 250px !important;
+    }
+
+    /* Subtle chart colors */
+    .bg-primary-soft { background-color: #e3f2fd !important; color: #0d6efd !important; }
+    .bg-danger-soft { background-color: #f8d7da !important; color: #842029 !important; }
+    .bg-warning-soft { background-color: #fff3cd !important; color: #664d03 !important; }
+    .bg-success-soft { background-color: #d1e7dd !important; color: #0f5132 !important; }
+
+    /* Badges subtler */
+    .badge-high { background-color: #b02a37; color: white; }
+    .badge-medium { background-color: #d39e00; color: black; }
+    .badge-low { background-color: #146c43; color: white; }
+
+    /* Tables margin */
+    #studentsTable_wrapper {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container-fluid">
+  <header>
+    <h1 class="fw-bold">Mentor Dashboard</h1>
+    <p class="text-muted">Monitor student risk levels, attendance, and placements</p>
+  </header>
+
+  <main>
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-4 text-center">
+      <div class="col-6 col-md-3">
+        <div class="card card-summary bg-primary-soft">
+          <h6>Total Students</h6>
+          <h2 id="totalStudents">0</h2>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-summary bg-danger-soft">
+          <h6>High Risk Students</h6>
+          <h2 id="highRiskCount">0</h2>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-summary bg-warning-soft">
+          <h6>Medium Risk Students</h6>
+          <h2 id="midCount">0</h2>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="card card-summary bg-success-soft">
+          <h6>Low Risk Students</h6>
+          <h2 id="lowCount">0</h2>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+      <div class="col-lg-6">
+        <div class="chart-container">
+          <h6 class="mb-3">Placement Score Distribution</h6>
+          <canvas id="placementScoreChart"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="chart-container">
+          <h6 class="mb-3">Risk Level Breakdown</h6>
+          <canvas id="riskLevelPieChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+      <div class="col-12">
+        <div class="chart-container" style="height: 180px;">
+          <h6 class="mb-3">Attendance Percentage Trends (Sample 10 Students)</h6>
+          <canvas id="attendanceLineChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- High Risk Students with Alert and Export -->
+    <section>
+      <h5 class="mb-3 text-danger fw-semibold">High Risk Students</h5>
+
+      <div class="btn-group mb-3" role="group" aria-label="Actions">
+        <button id="sendAlertBtn" type="button" class="btn btn-danger" disabled>
+          Send Alert Message
+        </button>
+        <button id="exportCsvBtn" type="button" class="btn btn-outline-secondary">
+          Export Selected to CSV
+        </button>
+      </div>
+
+      <div id="highRiskPanel" class="table-responsive">
+        <table id="highRiskTable" class="table table-striped table-hover align-middle" style="min-width: 700px;">
+          <thead class="table-danger">
+            <tr>
+              <th><input type="checkbox" id="selectAllHighRisk" aria-label="Select all high risk students" /></th>
+              <th>Name</th>
+              <th>Department</th>
+              <th>Attendance %</th>
+              <th>Placement Score</th>
+              <th>Risk Level</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Rows dynamically added by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Full Students Table -->
+    <section>
+      <h5 class="mb-3">All Students Details</h5>
+      <div class="table-responsive">
+        <table id="studentsTable" class="table table-striped table-bordered align-middle" style="min-width: 700px;">
+          <thead class="table-light">
+            <tr>
+              <th>Name</th>
+              <th>Department</th>
+              <th>Attendance %</th>
+              <th>Placement Score</th>
+              <th>Risk Level</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Rows dynamically added by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+<script>
+  const students = [
+    { student_id:101, student_name:"Subhikshaa M", email:"subhi@gmail.com", department:"CSE", attendance_percentage:92, placement_score:92 },
+    { student_id:102, student_name:"Madhesh", email:"madhesh@gmail.com", department:"IT", attendance_percentage:72, placement_score:85 }, // LOW
+    { student_id:103, student_name:"Aditi Sharma", email:"aditi@gmail.com", department:"CSE", attendance_percentage:80, placement_score:78 },
+    { student_id:104, student_name:"Rahul Verma", email:"rahul@gmail.com", department:"ECE", attendance_percentage:65, placement_score:55 }, // HIGH
+    { student_id:105, student_name:"Ananya Singh", email:"ananya.singh@gmail.com", department:"CSE", attendance_percentage:58, placement_score:58 }, // HIGH
+    { student_id:106, student_name:"Vikram Patel", email:"vikram.patel@gmail.com", department:"IT", attendance_percentage:60, placement_score:62 },
+    { student_id:107, student_name:"Rhea Das", email:"rhea.das@gmail.com", department:"ECE", attendance_percentage:55, placement_score:52 }, // HIGH
+    { student_id:108, student_name:"Rajesh Kumar", email:"rajesh.kumar@gmail.com", department:"CSE", attendance_percentage:62, placement_score:65 },
+    { student_id:109, student_name:"Shruti Rao", email:"shruti.rao@gmail.com", department:"IT", attendance_percentage:59, placement_score:68 },
+    { student_id:110, student_name:"Arjun Nair", email:"arjun.nair@gmail.com", department:"ECE", attendance_percentage:57, placement_score:75 },
+    { student_id:111, student_name:"Priya Menon", email:"priya.menon@gmail.com", department:"CSE", attendance_percentage:56, placement_score:82 }, // LOW
+    { student_id:112, student_name:"Manish Sharma", email:"manish.sharma@gmail.com", department:"IT", attendance_percentage:54, placement_score:54 }, // HIGH
+    { student_id:113, student_name:"Nikita Joshi", email:"nikita.joshi@gmail.com", department:"ECE", attendance_percentage:53, placement_score:72 },
+    { student_id:114, student_name:"Karan Singh", email:"karan.singh@gmail.com", department:"CSE", attendance_percentage:52, placement_score:88 } // LOW
+  ];
+
+  function getRiskLevel(score) {
+    if (score < 60) return 'High';
+    if (score < 80) return 'Medium';
+    return 'Low';
+  }
+
+
+  // Update summary counts
+  function updateSummaryCounts() {
+    const total = students.length;
+    const highRisk = students.filter(s => getRiskLevel(s.placement_score) === 'High').length;
+    const mediumRisk = students.filter(s => getRiskLevel(s.placement_score) === 'Medium').length;
+    const lowRisk = students.filter(s => getRiskLevel(s.placement_score) === 'Low').length;
+
+    document.getElementById('totalStudents').textContent = total;
+    document.getElementById('highRiskCount').textContent = highRisk;
+    document.getElementById('midCount').textContent = mediumRisk;
+    document.getElementById('lowCount').textContent = lowRisk;
+
+    return { highRisk, mediumRisk, lowRisk };
+  }
+
+  // Populate high risk table
+  function populateHighRiskTable() {
+    const tbody = $('#highRiskTable tbody');
+    tbody.empty();
+    students.filter(s => getRiskLevel(s.placement_score) === 'High').forEach(s => {
+      const tr = $(`
+        <tr>
+          <td><input type="checkbox" class="highRiskCheckbox" data-student='${JSON.stringify(s)}' aria-label="Select ${s.student_name}" /></td>
+          <td>${s.student_name}</td>
+          <td>${s.department}</td>
+          <td>${s.attendance_percentage.toFixed(2)}</td>
+          <td>${s.placement_score.toFixed(2)}</td>
+          <td><span class="badge badge-high">High</span></td>
+        </tr>
+      `);
+      tbody.append(tr);
+    });
+  }
+
+  // Populate full students table
+  function populateStudentsTable() {
+    const tbody = $('#studentsTable tbody');
+    tbody.empty();
+    students.forEach(s => {
+      const risk = getRiskLevel(s.placement_score);
+      let badgeClass = '';
+      if (risk === 'High') badgeClass = 'badge-high';
+      else if (risk === 'Medium') badgeClass = 'badge-medium';
+      else badgeClass = 'badge-low';
+
+      const tr = $(`
+        <tr>
+          <td>${s.student_name}</td>
+          <td>${s.department}</td>
+          <td>${s.attendance_percentage.toFixed(2)}</td>
+          <td>${s.placement_score.toFixed(2)}</td>
+          <td><span class="badge ${badgeClass}">${risk}</span></td>
+          <td><a href="/student/${s.student_id}" class="btn btn-sm btn-outline-primary">View Details</a></td>
+        </tr>
+      `);
+      tbody.append(tr);
+    });
+  }
+
+  // Setup DataTables after populating tables
+  function initializeDataTables() {
+    // Destroy existing tables if any (important for re-initialization)
+    if ( $.fn.DataTable.isDataTable('#highRiskTable') ) $('#highRiskTable').DataTable().destroy();
+    if ( $.fn.DataTable.isDataTable('#studentsTable') ) $('#studentsTable').DataTable().destroy();
+
+    $('#highRiskTable').DataTable({
+      paging: true,
+      pageLength: 5,
+      lengthMenu: [5, 10, 25],
+      order: [[4, 'asc']],
+      columnDefs: [{ orderable: false, targets: 0 }],
+      info: false,
+      searching: true,
+      language: { search: "Search Students:" },
+      // preserve checkbox state on pagination etc.
+      drawCallback: function() {
+        attachCheckboxListeners();
+      }
+    });
+
+    $('#studentsTable').DataTable({
+      paging: true,
+      pageLength: 10,
+      lengthMenu: [5, 10, 25, 50],
+      order: [[3, 'desc']],
+      columnDefs: [{ orderable: false, targets: 5 }],
+      language: { search: "Search Students:" }
+    });
+  }
+
+  // Checkbox & buttons logic with delegation for DataTables dynamic rows
+  function attachCheckboxListeners() {
+    const sendAlertBtn = document.getElementById('sendAlertBtn');
+    const exportCsvBtn = document.getElementById('exportCsvBtn');
+    const selectAllCheckbox = document.getElementById('selectAllHighRisk');
+
+    // Use event delegation for dynamic checkboxes in high risk table body
+    $('#highRiskTable tbody').off('change', '.highRiskCheckbox').on('change', '.highRiskCheckbox', function () {
+      updateActionButtons();
+      updateSelectAllCheckbox();
+    });
+
+    // Select All checkbox change
+    selectAllCheckbox.onchange = function () {
+      const checkboxes = document.querySelectorAll('.highRiskCheckbox');
+      checkboxes.forEach(cb => cb.checked = this.checked);
+      updateActionButtons();
+    };
+
+    // Update action buttons state
+    function updateActionButtons() {
+      const checkboxes = document.querySelectorAll('.highRiskCheckbox');
+      const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+      sendAlertBtn.disabled = !anyChecked;
+      exportCsvBtn.disabled = !anyChecked;
+    }
+
+    // Update Select All checkbox based on individual checkbox state
+    function updateSelectAllCheckbox() {
+      const checkboxes = document.querySelectorAll('.highRiskCheckbox');
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+      selectAllCheckbox.checked = allChecked;
+    }
+
+    // Initialize buttons state on load
+    updateActionButtons();
+    updateSelectAllCheckbox();
+
+    // Send Alert Button
+    sendAlertBtn.onclick = function () {
+      const selectedStudents = Array.from(document.querySelectorAll('.highRiskCheckbox'))
+        .filter(cb => cb.checked)
+        .map(cb => JSON.parse(cb.getAttribute('data-student')));
+
+      if(selectedStudents.length === 0) {
+        alert('Please select at least one student.');
+        return;
+      }
+
+      const names = selectedStudents.map(s => s.student_name).join(', ');
+      alert(`Alert message sent to: ${names}`);
+
+      // TODO: Replace alert with real API call for sending alerts
+    };
+
+    // Export CSV Button
+    exportCsvBtn.onclick = function () {
+      const selectedStudents = Array.from(document.querySelectorAll('.highRiskCheckbox'))
+        .filter(cb => cb.checked)
+        .map(cb => JSON.parse(cb.getAttribute('data-student')));
+
+      if(selectedStudents.length === 0) {
+        alert('Please select at least one student to export.');
+        return;
+      }
+
+      const csvHeaders = ['Student Name', 'Department', 'Attendance %', 'Placement Score', 'Risk Level'];
+      const csvRows = selectedStudents.map(s => [
+        `"${s.student_name.replace(/"/g, '""')}"`,
+        `"${s.department.replace(/"/g, '""')}"`,
+        s.attendance_percentage.toFixed(2),
+        s.placement_score.toFixed(2),
+        'High'
+      ].join(','));
+
+      const csvContent = [csvHeaders.join(','), ...csvRows].join('\r\n');
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'high_risk_students.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    };
+  }
+
+  // --------------------
+  // Initialize dashboard
+  // --------------------
+  $(document).ready(function () {
+    // Update summary counts
+    const counts = updateSummaryCounts();
+
+    // Populate tables
+    populateHighRiskTable();
+    populateStudentsTable();
+
+    // Initialize DataTables
+    initializeDataTables();
+
+    // Attach checkbox listeners (including buttons enable/disable)
+    attachCheckboxListeners();
+
+    // Create charts
+    createCharts(counts);
+  });
+
+  // --------------------
+  // Charts
+  // --------------------
+  function createCharts({ highRisk, mediumRisk, lowRisk }) {
+    // Placement Score Distribution Bar Chart
+    const placementCtx = document.getElementById('placementScoreChart').getContext('2d');
+    new Chart(placementCtx, {
+      type: 'bar',
+      data: {
+        labels: ['< 60', '60 - 80', '80+'],
+        datasets: [{
+          label: 'Students Count',
+          data: [highRisk, mediumRisk, lowRisk],
+          backgroundColor: ['#b02a37cc', '#d39e00cc', '#146c43cc'],
+          borderRadius: 5,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            precision: 0,
+            title: { display: true, text: 'Number of Students' },
+            grid: { color: '#e9ecef' },
+            ticks: { color: '#495057' }
+          },
+          x: {
+            title: { display: true, text: 'Placement Score Range' },
+            grid: { display: false },
+            ticks: { color: '#495057' }
+          }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#212529cc',
+            titleColor: '#fff',
+            bodyColor: '#eee'
+          }
+        }
+      }
+    });
+
+    // Risk Level Breakdown Pie Chart
+    const riskCtx = document.getElementById('riskLevelPieChart').getContext('2d');
+    new Chart(riskCtx, {
+      type: 'pie',
+      data: {
+        labels: ['High Risk', 'Medium Risk', 'Low Risk'],
+        datasets: [{
+          label: 'Risk Level',
+          data: [highRisk, mediumRisk, lowRisk],
+          backgroundColor: ['#b02a37cc', '#d39e00cc', '#146c43cc']
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#495057' } },
+          tooltip: {
+            backgroundColor: '#212529cc',
+            titleColor: '#fff',
+            bodyColor: '#eee'
+          }
+        }
+      }
+    });
+
+    // Attendance Trends Line Chart (last 10 students sample)
+    const last10 = students.slice(-10);
+    const attendanceLabels = last10.map(s => s.student_name);
+    const attendanceData = last10.map(s => s.attendance_percentage);
+
+    const attendanceCtx = document.getElementById('attendanceLineChart').getContext('2d');
+    new Chart(attendanceCtx, {
+      type: 'line',
+      data: {
+        labels: attendanceLabels,
+        datasets: [{
+          label: 'Attendance %',
+          data: attendanceData,
+          fill: true,
+          backgroundColor: 'rgba(20, 108, 67, 0.15)', // soft green fill
+          borderColor: '#146c43', // dark green
+          tension: 0.3,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          y: {
+            min: 0,
+            max: 100,
+            title: { display: true, text: 'Attendance Percentage' },
+            ticks: {
+              stepSize: 10,
+              color: '#495057',
+              callback: value => value + '%'
+            },
+            grid: { color: '#e9ecef' }
+          },
+          x: {
+            title: { display: true, text: 'Students' },
+            ticks: { color: '#495057' },
+            grid: { display: false }
+          }
+        },
+        plugins: {
+          legend: { display: true, labels: { color: '#495057' } },
+          tooltip: {
+            backgroundColor: '#212529cc',
+            titleColor: '#fff',
+            bodyColor: '#eee'
+          }
+        }
+      }
+    });
+  }
+</script>
+
+</body>
+</html>

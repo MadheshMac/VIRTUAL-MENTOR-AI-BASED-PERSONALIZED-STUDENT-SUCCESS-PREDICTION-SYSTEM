@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Virtual Mentor Dashboard</title>
+
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+
+  <!-- Bootstrap Icons -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"
+    rel="stylesheet"
+  />
+
+  <!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- FullCalendar CSS & JS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css"
+    rel="stylesheet"
+  />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+  <style>
+    body {
+      background: #f4f6f9;
+      font-family: Arial, sans-serif;
+    }
+    .sidebar {
+      height: 100vh;
+      background: #1e293b;
+      color: white;
+      padding: 20px;
+      position: fixed;
+      width: 16.6667%;
+      overflow-y: auto;
+    }
+    .sidebar a {
+      color: #cbd5e1;
+      text-decoration: none;
+      display: block;
+      margin: 15px 0;
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.2s;
+    }
+    .sidebar a:hover {
+      color: #60a5fa;
+    }
+    .sidebar a.active {
+      color: #3b82f6;
+      font-weight: bold;
+    }
+    .main-content {
+      margin-left: 16.6667%;
+      padding: 20px;
+    }
+    .card {
+      border-radius: 15px;
+    }
+    h3,
+    h5,
+    h6 {
+      user-select: none;
+    }
+
+    /* KPI Cards */
+    .kpi-cards .card {
+      text-align: center;
+    }
+
+    /* Academic Details */
+    .academic-details p {
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      user-select: text;
+    }
+
+    /* Career Path Navigator Roadmap */
+    .career-path-map {
+      padding: 10px;
+    }
+    .timeline {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      padding: 10px 0;
+      scrollbar-width: thin;
+      scrollbar-color: #3b82f6 #e0e0e0;
+      max-height: 140px;
+      align-items: center;
+      scroll-behavior: smooth;
+      border-bottom: 1px solid #ddd;
+    }
+    .timeline::-webkit-scrollbar {
+      height: 8px;
+    }
+    .timeline::-webkit-scrollbar-track {
+      background: #e0e0e0;
+      border-radius: 4px;
+    }
+    .timeline::-webkit-scrollbar-thumb {
+      background-color: #3b82f6;
+      border-radius: 4px;
+    }
+    .timeline-item {
+      flex: 0 0 auto;
+      width: 140px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      padding: 10px 12px;
+      text-align: center;
+      position: relative;
+      font-size: 0.9rem;
+      user-select: text;
+    }
+    .timeline-item .circle {
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 10px;
+      border-radius: 50%;
+      background-color: #10b981;
+      color: white;
+      line-height: 40px;
+      font-weight: bold;
+      font-size: 18px;
+      box-shadow: 0 0 8px #10b981aa;
+      user-select: none;
+    }
+    .timeline-item.overdue .circle {
+      background-color: #ef4444;
+      box-shadow: 0 0 8px #ef4444aa;
+    }
+    .timeline-item.due-today .circle {
+      background-color: #f97316;
+      box-shadow: 0 0 8px #f97316aa;
+    }
+    .timeline-item h6 {
+      margin-bottom: 4px;
+      font-weight: 600;
+      font-size: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .timeline-item p {
+      margin: 0;
+      color: #555;
+    }
+    .timeline-item::after {
+      content: "";
+      position: absolute;
+      top: 20px;
+      right: -20px;
+      width: 40px;
+      height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+      z-index: -1;
+    }
+    .timeline-item:last-child::after {
+      content: none;
+    }
+
+    /* Calendar card */
+    #calendar {
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    /* Performance Table */
+    .performance-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 15px rgb(0 0 0 / 0.1);
+    }
+    .performance-table thead {
+      background: #3b82f6;
+      color: white;
+      user-select: none;
+    }
+    .performance-table th,
+    .performance-table td {
+      padding: 12px 15px;
+      text-align: center;
+      border-bottom: 1px solid #e0e0e0;
+      font-size: 0.95rem;
+    }
+    .performance-table tbody tr:nth-child(even) {
+      background: #f9fafb;
+    }
+    .performance-table tbody tr:hover {
+      background: #dbeafe;
+    }
+    .performance-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+      .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+      }
+      .main-content {
+        margin-left: 0;
+        padding: 10px;
+      }
+      .timeline {
+        max-height: none;
+        flex-wrap: wrap;
+        overflow-x: visible;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h4>Virtual Mentor</h4>
+    <a
+      id="link-dashboard"
+      class="active"
+      onclick="showSection('section-dashboard')"
+      ><i class="bi bi-speedometer2"></i> Dashboard</a
+    >
+    <a id="link-performance" onclick="showSection('section-performance')"
+      ><i class="bi bi-bar-chart-line"></i> Performance</a
+    >
+    <a id="link-alerts" onclick="showSection('section-alerts')"
+      ><i class="bi bi-exclamation-triangle"></i> Alerts</a
+    >
+    <a
+      id="link-recommendations"
+      onclick="showSection('section-recommendations')"
+      ><i class="bi bi-lightbulb"></i> Recommendations</a
+    >
+    <a href="/logout"><i class="bi bi-box-arrow-right"></i> Logout</a>
+  </div>
+
+  <div class="main-content">
+    <h3>Welcome, {{ student.student_name }}</h3>
+    <p class="text-muted">AI-Based Student Performance Analysis</p>
+
+    <!-- KPI CARDS -->
+    <div class="row mt-4 kpi-cards g-3">
+      <div class="col-6 col-md-2">
+        <div class="card shadow p-3 text-center">
+          <h6>Overall Attendance</h6>
+          <h3>{{ student.overall_attendance_percentage }}%</h3>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="card shadow p-3 text-danger text-center">
+          <h6>Risk Level</h6>
+          <h3>{{ risk }}</h3>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="card shadow p-3 text-center">
+          <h6>Study Hours</h6>
+          <h3>{{ student.study_hours_per_day }} hrs</h3>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="card shadow p-3 text-success text-center">
+          <h6>Placement Score</h6>
+          <h3>{{ placement_score }}</h3>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="card shadow p-3 text-center">
+          <h6>Current GPA</h6>
+          <h3>{{ student.current_gpa }}</h3>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="card shadow p-3 text-center">
+          <h6>Success Probability</h6>
+          <h3>{{ student.success_probability }}%</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Academic Details -->
+    <div class="card shadow p-4 mt-4 academic-details">
+      <h5>Academic Details</h5>
+      <div class="row">
+        <div class="col-md-4">
+          <p><strong>Internal Marks:</strong> {{ student.internal_marks }}</p>
+          <p><strong>External Marks:</strong> {{ student.external_marks }}</p>
+          <p><strong>Quiz Average:</strong> {{ student.quiz_average }}</p>
+        </div>
+        <div class="col-md-4">
+          <p>
+            <strong>Assignment Completion Rate:</strong>
+            {{ student.assignment_completion_rate }}%
+          </p>
+          <p><strong>Backlogs Count:</strong> {{ student.backlogs_count }}</p>
+          <p><strong>Previous Semester GPA:</strong> {{ student.previous_semester_gpa }}</p>
+        </div>
+        <div class="col-md-4">
+          <p><strong>LMS Login Frequency:</strong> {{ student.lms_login_frequency }}</p>
+          <p>
+            <strong>Class Participation Score:</strong>
+            {{ student.class_participation_score }}
+          </p>
+          <p><strong>Extracurricular Hours:</strong> {{ student.extracurricular_hours }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD SECTION -->
+    <div id="section-dashboard" class="mt-5">
+      <div class="row g-4">
+        <!-- Left: Radar Chart replacing Subject Attendance -->
+        <div class="col-lg-7">
+<div class="card shadow p-4">
+  <h5>📊 Subject-wise Attendance Required Analysis</h5>
+  <p class="text-muted">
+    Shows attended classes and how many more you can miss (75% rule)
+  </p>
+  <canvas id="subjectAttendanceChart" height="140"></canvas>
+</div>
+
+<div class="p-3">
+
+  <p><strong>Total Classes Conducted:</strong> 60 hrs</p>
+  <p><strong>Classes Attended:</strong> {{ student.attended_hours }}</p>
+  <p><strong>Minimum Required for 75%:</strong> 45 hrs</p>
+
+  <p class="mt-2">
+    <strong>Classes You Can Still Miss:</strong>
+    <span id="canMissText" class="text-success fw-bold"></span>
+  </p>
+
+  <p>
+    <strong>Additional Classes Needed to Reach 75%:</strong>
+    <span id="needAttendText" class="text-danger fw-bold"></span>
+  </p>
+
+  <!-- Progress Bar -->
+  <div class="progress mt-3" style="height: 22px;">
+    <div
+      id="attendanceProgressBar"
+      class="progress-bar bg-success"
+      role="progressbar"
+      style="width: 0%"
+    >
+      0%
+    </div>
+  </div>
+
+</div>
+
+</div>
+
+        </div>
+
+        <!-- Right: Career Path Navigator + Calendar stacked vertically -->
+        <div class="col-lg-5 d-flex flex-column gap-4">
+          <!-- Career Path Navigator Roadmap -->
+          <div
+            class="card shadow p-4 career-path-map"
+            style="overflow-x: auto; max-height: 150px;"
+          >
+            <h5>Career Path Navigator</h5>
+            <form method="POST" id="careerForm" class="mb-3">
+              <label for="career_goal" class="form-label"
+                >Select Your Career Goal</label
+              >
+              <select
+                class="form-select"
+                id="career_goal"
+                name="career_goal"
+                onchange="document.getElementById('careerForm').submit()"
+              >
+                {% for goal in career_goals %}
+                <option value="{{ goal }}" {% if goal == selected_goal %}selected{% endif %}>
+                  {{ goal }}
+                </option>
+                {% endfor %}
+              </select>
+            </form>
+
+            {% if career_path %}
+            <div class="timeline" aria-label="Career milestones timeline">
+              {% for milestone in milestones_progress %}
+              <div
+                class="timeline-item
+                {% if milestone.status == 'Overdue' %}overdue
+                {% elif milestone.status == 'Due Today' %}due-today
+                {% else %}on-track
+                {% endif %}"
+              >
+                <div class="circle" title="{{ milestone.name }} - {{ milestone.status }}">
+                  {{ loop.index }}
+                </div>
+                <h6 title="{{ milestone.name }}">{{ milestone.name }}</h6>
+                <p>Due: {{ milestone.deadline }}</p>
+                <p>Status: {{ milestone.status }}</p>
+              </div>
+              {% endfor %}
+            </div>
+
+            <p class="mt-3">
+              <strong>Goal Status:</strong>
+              {% if goal_divergence == 'On Track' %}
+              <span style="color: green;">On Track ✅</span>
+              {% else %}
+              <span style="color: red;">At Risk ⚠️</span>
+              {% endif %}
+            </p>
+            {% endif %}
+          </div>
+
+          <!-- Calendar Card -->
+          <div class="card shadow p-3" style="height: 320px; overflow: hidden;">
+            <h6>Exam & Career Milestone Calendar</h6>
+            <div id="calendar" style="height: 280px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PERFORMANCE SECTION -->
+    <div id="section-performance" style="display: none;">
+      <div class="row mt-5">
+        <div class="col-12">
+          <div class="card shadow p-4">
+            <h5>Subject-wise Marks & External Recommendations</h5>
+            <div class="table-responsive">
+              <table class="performance-table">
+                <thead>
+                  <tr>
+                    <th>Subject</th>
+                    <th>CIA1 (50)</th>
+                    <th>CIA2 (50)</th>
+                    <th>SA1 (100)</th>
+                    <th>SA2 (100)</th>
+                    <th><strong>Total Internal (300)</strong></th>
+                    <th><strong>Internal Normalized (100)</strong></th>
+                    <th>External Marks Needed for Grades</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for subject in subjects %}
+                  <tr>
+                    <td>{{ subject.name }}</td>
+                    <td>{{ subject.cia1 }}</td>
+                    <td>{{ subject.cia2 }}</td>
+                    <td>{{ subject.sa1 }}</td>
+                    <td>{{ subject.sa2 }}</td>
+                    <td>{{ subject.total_internal }}</td>
+                    <td>{{ subject.internal_normalized }}</td>
+                    <td>
+                      {% for grade, ext_req in subject.external_recommendations.items() %}
+                      {% if ext_req is not none %}
+                      <strong>{{ grade }}:</strong> {{ ext_req }}<br />
+                      {% else %}
+                      <strong>{{ grade }}:</strong> Not possible<br />
+                      {% endif %}
+                      {% endfor %}
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Analytics below the table -->
+      <div class="row g-4 mt-4">
+        <div class="col-md-6">
+          <div class="card shadow p-3" style="height: 320px;">
+            <h6>Career Progress Donut Chart</h6>
+            <canvas id="careerProgressDonut"></canvas>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow p-3" style="height: 320px;">
+            <h6>Performance Trend (Line Chart)</h6>
+            <canvas id="performanceTrendChart"></canvas>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow p-3" style="height: 320px;">
+            <h6>Marks Distribution (Stacked Bar)</h6>
+            <canvas id="marksDistributionChart"></canvas>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card shadow p-3" style="height: 320px;">
+            <h6>Study Hours vs CGPA</h6>
+            <canvas id="studyVsGPAChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERTS SECTION -->
+    <div id="section-alerts" style="display: none;">
+      <div class="row mt-5">
+        <div class="col-md-12">
+          <div class="card shadow p-4">
+            <h6 class="text-danger">Alerts</h6>
+            <ul>
+              {% for a in alerts %}
+              <li>{{ a.message }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECOMMENDATIONS SECTION -->
+    <div id="section-recommendations" style="display: none;">
+      <div class="row mt-5">
+        <div class="col-md-12">
+          <div class="card shadow p-4">
+            <h6 class="text-success">Recommendations</h6>
+            <ul>
+              {% for r in recommendations %}
+              <li>{{ r }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chatbot widget -->
+  <div
+    id="chatbot"
+    style="
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 320px;
+      max-height: 420px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 30px rgb(0 0 0 / 0.2);
+      display: flex;
+      flex-direction: column;
+    "
+  >
+    <div
+      style="
+        background: #3b82f6;
+        padding: 10px;
+        color: white;
+        font-weight: bold;
+        border-radius: 10px 10px 0 0;
+      "
+    >
+      Virtual Mentor Chat
+    </div>
+    <div
+      id="chatMessages"
+      style="flex-grow: 1; padding: 10px; overflow-y: auto; font-size: 0.9rem;"
+    ></div>
+    <input
+      id="chatInput"
+      type="text"
+      placeholder="Ask your mentor..."
+      style="
+        border: none;
+        border-top: 1px solid #ddd;
+        padding: 10px;
+        outline: none;
+        border-radius: 0 0 10px 10px;
+        font-size: 0.9rem;
+      "
+    />
+  </div>
+
+  <script>
+    // Show/hide sections function
+    function showSection(sectionId) {
+  const sections = [
+    "section-dashboard",
+    "section-performance",
+    "section-alerts",
+    "section-recommendations"
+  ];
+
+  sections.forEach(id => {
+    document.getElementById(id).style.display =
+      id === sectionId ? "block" : "none";
+  });
+  if (sectionId === "section-dashboard") {
+  setTimeout(() => {
+    renderSubjectAttendanceRequired(); // ✅ THIS
+  }, 200);
+}
+
+  if (sectionId === "section-performance") {
+    setTimeout(() => {
+      renderCareerProgressDonut();
+      renderPerformanceTrend();
+      renderMarksDistribution();
+      renderStudyVsGPA();
+    }, 200);
+  }
+
+  document.querySelectorAll(".sidebar a").forEach(link =>
+    link.classList.remove("active")
+  );
+
+  const activeLink = document.querySelector(
+    `.sidebar a[onclick="showSection('${sectionId}')"]`
+  );
+  if (activeLink) activeLink.classList.add("active");
+}
+function renderSubjectAttendanceRequired() {
+
+  const subjectAttendanceData = [
+    {% for s in subjects %}
+    {
+      name: "{{ s.name }}",
+      total: {{ s.total_classes | default(60) }},
+      attended: {{ s.attended_classes | default(45) }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  const labels = [];
+  const attendedData = [];
+  const canMissData = [];
+  const deficitData = [];
+
+  subjectAttendanceData.forEach(s => {
+    const minRequired = Math.ceil(0.75 * s.total);
+
+    labels.push(s.name);
+    attendedData.push(s.attended);
+
+    if (s.attended >= minRequired) {
+      canMissData.push(s.attended - minRequired);
+      deficitData.push(0);
+    } else {
+      canMissData.push(0);
+      deficitData.push(minRequired - s.attended);
+    }
+  });
+
+  const ctx = document
+    .getElementById("subjectAttendanceChart")
+    .getContext("2d");
+
+  if (window.subjectAttendanceChart)
+    window.subjectAttendanceChart.destroy();
+
+  window.subjectAttendanceChart = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Attended Classes",
+          data: attendedData,
+          backgroundColor: "#22c55e"
+        },
+        {
+          label: "Can Miss (Safe Zone)",
+          data: canMissData,
+          backgroundColor: "#3b82f6"
+        },
+        {
+          label: "Attendance Deficit",
+          data: deficitData,
+          backgroundColor: "#ef4444"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { stacked: true },
+        y: {
+          stacked: true,
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: "Number of Classes"
+          }
+        }
+      },
+      plugins: {
+        legend: { position: "bottom" }
+      }
+    }
+  });
+}
+
+
+function renderAcademicBarChart() {
+  const ctx = document.getElementById("academicBarChart").getContext("2d");
+
+  if (window.academicBar) window.academicBar.destroy();
+
+  window.academicBar = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: ["Internal", "External", "Quiz", "Assignments"],
+      datasets: [{
+        label: "Score (%)",
+        data: [
+          {{ internal_marks }},
+          {{ external_marks }},
+          {{ quiz_average }},
+          {{ assignment_completion_rate }}
+        ],
+        backgroundColor: [
+          "#60a5fa",
+          "#34d399",
+          "#fbbf24",
+          "#a78bfa"
+        ],
+        borderRadius: 8
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+}
+function renderGrowthLineChart() {
+  const ctx = document.getElementById("growthLineChart").getContext("2d");
+
+  if (window.growthLine) window.growthLine.destroy();
+
+  window.growthLine = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: ["Prev Sem", "Current", "Target"],
+      datasets: [
+        {
+          label: "GPA",
+          data: [
+            {{ previous_semester_gpa }},
+            {{ current_gpa }},
+            9.0
+          ],
+          borderColor: "#3b82f6",
+          backgroundColor: "rgba(59,130,246,0.2)",
+          tension: 0.4
+        },
+        {
+          label: "Placement Readiness",
+          data: [
+            {{ placement_score - 10 }},
+            {{ placement_score }},
+            95
+          ],
+          borderColor: "#10b981",
+          backgroundColor: "rgba(16,185,129,0.2)",
+          tension: 0.4
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
+
+
+    // Initialize FullCalendar with exam events
+    document.addEventListener("DOMContentLoaded", function () {
+      var calendarEl = document.getElementById("calendar");
+      if (!calendarEl) return;
+      var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: "dayGridMonth",
+        height: 280,
+        events: [
+          {% for exam in exams %}
+          {
+            title: "{{ exam.course_name }} {{ exam.exam_type }}",
+            start: "{{ exam.exam_date }}",
+            color: "red",
+          },
+          {% endfor %}
+          {% for milestone in milestones_progress %}
+          {
+            title: "{{ milestone.name }}",
+            start: "{{ milestone.deadline }}",
+            color: "#10b981",
+          }
+          {% if not loop.last %},{% endif %}
+          {% endfor %}
+        ],
+        dayMaxEvents: true,
+        themeSystem: "bootstrap",
+        headerToolbar: {
+          left: "prev,next today",
+          center: "title",
+          right: "",
+        },
+      });
+      calendar.render();
+    });
+
+    // Chatbot
+    const chatInput = document.getElementById("chatInput");
+    const chatMessages = document.getElementById("chatMessages");
+    chatInput.addEventListener("keydown", function (event) {
+      if (event.key === "Enter" && chatInput.value.trim() !== "") {
+        const userMessage = chatInput.value.trim();
+        chatMessages.innerHTML += `<div><b>You:</b> ${userMessage}</div>`;
+        chatInput.value = "";
+        // Simulate chatbot response (replace with real logic)
+        setTimeout(() => {
+          chatMessages.innerHTML += `<div><b>Mentor:</b> Sorry, I am still learning. Please ask your question later.</div>`;
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 1000);
+      }
+    });
+
+    // --- Data passed from backend (example placeholders) ---
+    const career_goals = [
+      {% for goal in career_goals %}
+      { id: {{ loop.index }}, name: "{{ goal }}", status: "{{ milestones_progress[loop.index0].status if milestones_progress[loop.index0] is defined else 'On Track' }}", due_date: "{{ milestones_progress[loop.index0].deadline if milestones_progress[loop.index0] is defined else '' }}" },
+      {% endfor %}
+    ];
+
+    const subjects = [
+      {% for subject in subjects %}
+      {
+        name: "{{ subject.name }}",
+        cia1: {{ subject.cia1 }},
+        cia2: {{ subject.cia2 }},
+        sa1: {{ subject.sa1 }},
+        sa2: {{ subject.sa2 }},
+        total_internal: {{ subject.total_internal }},
+        internal_normalized: {{ subject.internal_normalized }},
+        external_recommendations: {
+          A: {{ subject.external_recommendations.A or 'null' }},
+          B: {{ subject.external_recommendations.B or 'null' }},
+          C: {{ subject.external_recommendations.C or 'null' }},
+        },
+        attendance: {{ subject.attendance or 75 }},
+        quiz_average: {{ subject.quiz_average or 70 }},
+        assignments_completed: {{ subject.assignments_completed or 80 }}
+      }
+      {% if not loop.last %},{% endif %}
+      {% endfor %}
+    ];
+
+    const studyPerformanceData = [
+      { date: "2026-01-01", study_hours: 3, cgpa: 7.9 },
+      { date: "2026-01-10", study_hours: 5, cgpa: 8.0 },
+      { date: "2026-01-20", study_hours: 7, cgpa: 8.3 },
+      { date: "2026-01-30", study_hours: 6, cgpa: 8.2 },
+      { date: "2026-02-05", study_hours: 8, cgpa: 8.5 },
+    ];
+
+    // --- Visual Analytics Chart Functions ---
+
+    // Career Progress Donut
+    
+
+    // Performance Trend Line Chart
+    function renderPerformanceTrend() {
+      const ctx = document
+        .getElementById("performanceTrendChart")
+        .getContext("2d");
+      const labels = subjects.map((s) => s.name);
+
+      const exam1 = subjects.map((s) => s.cia1);
+      const exam2 = subjects.map((s) => s.cia2);
+      const exam3 = subjects.map((s) => s.sa1);
+      subjects = [
+    {
+        "name": "Data Structures",
+        "total_classes": 60,
+        "attended_classes": 48
+    },
+    {
+        "name": "DBMS",
+        "total_classes": 55,
+        "attended_classes": 40
+    },
+    {
+        "name": "Operating Systems",
+        "total_classes": 50,
+        "attended_classes": 32
+    },
+    {
+        "name": "Computer Networks",
+        "total_classes": 58,
+        "attended_classes": 50
+    }
+]
+
+
+
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "CIA1",
+              data: exam1,
+              borderColor: "#3b82f6",
+              backgroundColor: "rgba(59,130,246,0.3)",
+              fill: false,
+              tension: 0.3,
+            },
+            {
+              label: "CIA2",
+              data: exam2,
+              borderColor: "#10b981",
+              backgroundColor: "rgba(16,185,129,0.3)",
+              fill: false,
+              tension: 0.3,
+            },
+            {
+              label: "SA1",
+              data: exam3,
+              borderColor: "#ef4444",
+              backgroundColor: "rgba(239,68,68,0.3)",
+              fill: false,
+              tension: 0.3,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          interaction: {
+            mode: "nearest",
+            intersect: false,
+          },
+          plugins: {
+            legend: { position: "top" },
+            tooltip: { enabled: true },
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100,
+              title: { display: true, text: "Marks" },
+            },
+          },
+        },
+      });
+    }
+
+    // Marks Distribution Stacked Bar Chart
+    function renderMarksDistribution() {
+      const ctx = document
+        .getElementById("marksDistributionChart")
+        .getContext("2d");
+      const labels = subjects.map((s) => s.name);
+      const cia1 = subjects.map((s) => s.cia1);
+      const cia2 = subjects.map((s) => s.cia2);
+      const sa1 = subjects.map((s) => s.sa1);
+      const sa2 = subjects.map((s) => s.sa2);
+
+      new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "CIA1",
+              data: cia1,
+              backgroundColor: "#3b82f6",
+            },
+            {
+              label: "CIA2",
+              data: cia2,
+              backgroundColor: "#10b981",
+            },
+            {
+              label: "SA1",
+              data: sa1,
+              backgroundColor: "#fbbf24",
+            },
+            {
+              label: "SA2",
+              data: sa2,
+              backgroundColor: "#ef4444",
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, max: 200, beginAtZero: true },
+          },
+          plugins: {
+            legend: { position: "top" },
+            tooltip: { enabled: true },
+          },
+        },
+      });
+    }
+
+    // Study Hours vs CGPA Line Chart
+    function renderStudyVsGPA() {
+      const ctx = document.getElementById("studyVsGPAChart").getContext("2d");
+      const labels = studyPerformanceData.map((d) => d.date);
+      const studyHours = studyPerformanceData.map((d) => d.study_hours);
+      const cgpa = studyPerformanceData.map((d) => d.cgpa);
+
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Study Hours",
+              data: studyHours,
+              borderColor: "#3b82f6",
+              yAxisID: "y1",
+              fill: false,
+              tension: 0.3,
+              pointStyle: "circle",
+              pointRadius: 5,
+            },
+            {
+              label: "CGPA",
+              data: cgpa,
+              borderColor: "#10b981",
+              yAxisID: "y2",
+              fill: false,
+              tension: 0.3,
+              pointStyle: "rectRounded",
+              pointRadius: 5,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: "nearest", intersect: false },
+          plugins: { legend: { position: "top" }, tooltip: { enabled: true } },
+          scales: {
+            y1: {
+              type: "linear",
+              position: "left",
+              beginAtZero: true,
+              max: 12,
+              title: { display: true, text: "Study Hours" },
+            },
+            y2: {
+              type: "linear",
+              position: "right",
+              beginAtZero: true,
+              max: 10,
+              grid: { drawOnChartArea: false },
+              title: { display: true, text: "CGPA" },
+            },
+          },
+        },
+      });
+    }
+
+    // Radar Chart replacing Subject Attendance
+    function renderCareerProgressDonut() {
+  const statusMap = {
+    completed: 0,
+    pending: 0,
+    overdue: 0
+  };
+
+  career_goals.forEach(g => {
+    const s = g.status.toLowerCase();
+    if (s.includes("complete")) statusMap.completed++;
+    else if (s.includes("overdue")) statusMap.overdue++;
+    else statusMap.pending++;
+  });
+
+  const ctx = document.getElementById("careerProgressDonut").getContext("2d");
+
+  if (window.careerDonut) window.careerDonut.destroy();
+
+  window.careerDonut = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: ["Completed", "In Progress", "Overdue"],
+      datasets: [{
+        data: [
+          statusMap.completed,
+          statusMap.pending,
+          statusMap.overdue
+        ],
+        backgroundColor: ["#22c55e", "#3b82f6", "#ef4444"]
+      }]
+    },
+    options: {
+      cutout: "72%",
+      plugins: {
+        legend: { position: "bottom" }
+      }
+    }
+  });
+}
+
+
+    window.addEventListener("load", () => {
+  renderCareerProgressDonut();
+  renderPerformanceTrend();
+  renderMarksDistribution();
+  renderStudyVsGPA();
+  renderSubjectAttendanceRequired();
+
+  
+});
+
+  </script>
+  
+</body>
+</html>

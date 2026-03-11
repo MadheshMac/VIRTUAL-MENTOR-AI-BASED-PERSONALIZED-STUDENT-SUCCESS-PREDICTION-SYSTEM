@@ -1,0 +1,22 @@
+{
+  "Data Analyst": {
+    "company": "Capgemini",
+    "skills": ["SQL", "Excel", "Python", "Statistics", "Data Visualization"],
+    "certifications": ["Google Data Analytics", "IBM Data Science Professional Certificate"],
+    "milestones": [
+      {"name": "Complete SQL course", "deadline": "2026-06-30"},
+      {"name": "Apply for internship", "deadline": "2026-07-15"},
+      {"name": "Complete final year project", "deadline": "2026-09-01"}
+    ]
+  },
+  "Software Engineer": {
+    "company": "Infosys",
+    "skills": ["Java", "Data Structures", "Algorithms", "System Design"],
+    "certifications": ["Oracle Java Certification", "AWS Developer"],
+    "milestones": [
+      {"name": "Complete DS course", "deadline": "2026-05-15"},
+      {"name": "Participate in coding contests", "deadline": "2026-07-01"},
+      {"name": "Apply for internships", "deadline": "2026-08-01"}
+    ]
+  }
+}
